@@ -1,12 +1,8 @@
 const boardList = createBoardList();
 const boardGraph = createBoardGraph(boardList);
-boardGraph.forEach((squareRow) => {
-  squareRow.forEach((square) => {
-    console.log(`Position: ${square.position}`);
-    const possibleMoves = square.possibleMoves.map((move) => move.position);
-    console.log(possibleMoves);
-  });
-});
+
+console.log(getShortestPath([0, 3], [2, 1], boardGraph));
+
 function createSquare(position) {
   return {
     possibleMoves: [],
@@ -60,4 +56,52 @@ function createBoardGraph(boardList) {
     boardList[square.position[0]][square.position[1]] = square;
   }
   return boardList;
+}
+
+function getShortestPath(start, goal, boardGraph) {
+  if (
+    start[0] > 7 ||
+    start[0] < 0 ||
+    start[1] > 7 ||
+    start[1] < 0 ||
+    goal[0] > 7 ||
+    goal[0] < 0 ||
+    goal[1] > 7 ||
+    goal[1] < 0
+  )
+    throw new Error("Index out of range");
+  if (start[0] === goal[0] && start[1] === goal[1]) return [start];
+  const startingSquare = boardGraph[start[0]][start[1]];
+  const visited = createBoardList();
+  visited[start[0]][start[1]] = startingSquare.position;
+  const possibleMoves = [...createPath(startingSquare)];
+  let goalSquare = null;
+  while (possibleMoves.length !== 0) {
+    const square = possibleMoves.shift();
+    if (visited[square.position[0]][square.position[1]] !== null) continue;
+    if (square.position[0] === goal[0] && square.position[1] === goal[1]) {
+      goalSquare = square;
+      break;
+    } else {
+      visited[square.position[0]][square.position[1]] = square.position;
+      possibleMoves.push(...createPath(square));
+    }
+  }
+
+  const shortestPath = [goalSquare.position];
+  while (goalSquare.parent) {
+    goalSquare = goalSquare.parent;
+    shortestPath.unshift(goalSquare.position);
+  }
+  return shortestPath;
+}
+
+function createPath(square) {
+  return square.possibleMoves.map((move) => {
+    return {
+      parent: square,
+      position: move.position,
+      possibleMoves: move.possibleMoves,
+    };
+  });
 }
